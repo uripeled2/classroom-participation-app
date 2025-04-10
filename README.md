@@ -96,13 +96,19 @@ This project is configured for deployment on Railway with separate services for 
      - Railway will automatically use the settings in `frontend/railway.json`
 
 4. Connect the services:
-   - Get the URL of your deployed backend service
-   - Set it as an environment variable in the frontend service:
+   - Get the URL of your deployed backend service (e.g., https://your-backend-service.railway.app)
+   - Set it as an environment variable in the frontend service settings:
      ```
-     REACT_APP_BACKEND_URL=https://your-backend-service-url.railway.app
+     REACT_APP_BACKEND_URL=https://your-backend-service.railway.app
      ```
 
-5. Your application should now be deployed with both frontend and backend services connected!
+5. If you encounter ESLint errors during the build process, you can add these environment variables to the frontend service:
+   ```
+   DISABLE_ESLINT_PLUGIN=true
+   CI=false
+   ```
+
+6. Your application should now be deployed with both frontend and backend services connected!
 
 ## Alternative Deployment Options
 
