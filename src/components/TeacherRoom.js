@@ -11,8 +11,8 @@ function TeacherRoom({ roomId, name }) {
 
   // Connect to socket server on component mount
   useEffect(() => {
-    // In a real application, replace with your server URL
-    const newSocket = io('http://localhost:3001'); 
+    // Use environment variable for server URL or default to localhost
+    const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001'); 
     setSocket(newSocket);
 
     // Identify as a teacher and create room

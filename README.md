@@ -64,6 +64,80 @@ Alternatively, you can install and run the components manually:
    npm start
    ```
 
+## Deployment Options
+
+### 1. Render.com (Recommended for Simplicity)
+
+Render offers a free tier for both static sites and backend services.
+
+1. Sign up at [Render.com](https://render.com/)
+
+2. Deploy the frontend:
+   - Create a new "Static Site"
+   - Connect your GitHub repository
+   - Set build command: `npm run build`
+   - Set publish directory: `build`
+
+3. Deploy the backend:
+   - Create a new "Web Service"
+   - Connect your GitHub repository
+   - Set build command: `npm install`
+   - Set start command: `node server.js`
+   - Select the free plan
+
+4. Update the Socket.IO connection URL in your React components to point to your Render backend URL.
+
+### 2. Netlify + Heroku
+
+1. Deploy frontend to Netlify (free):
+   - Sign up at [Netlify.com](https://www.netlify.com/)
+   - Connect your GitHub repository
+   - Set build command: `npm run build`
+   - Set publish directory: `build`
+
+2. Deploy backend to Heroku (free with limitations):
+   - Sign up at [Heroku.com](https://www.heroku.com/)
+   - Create a new app
+   - Connect your GitHub repository or use Heroku CLI
+   - Set up a `Procfile` with: `web: node server.js`
+   - Deploy and scale your dynos
+
+3. Update the Socket.IO connection URL in your frontend code to point to your Heroku app URL.
+
+### 3. Railway.app
+
+Railway offers a good free tier with simple deployment:
+
+1. Sign up at [Railway.app](https://railway.app/)
+2. Create a new project and connect your GitHub repository
+3. Deploy both frontend and backend as separate services
+4. Configure environment variables and update the Socket.IO connection URL
+
+### Preparing Your Code for Deployment
+
+1. Update the Socket.IO connection in your React components (TeacherRoom.js and StudentRoom.js):
+
+```javascript
+// From this:
+const newSocket = io('http://localhost:3001');
+
+// To this:
+const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
+```
+
+2. Add to your package.json:
+
+```json
+"engines": {
+  "node": ">=14"
+},
+```
+
+3. Create a .env file for local development:
+```
+REACT_APP_BACKEND_URL=http://localhost:3001
+```
+
 ## Technologies Used
 
 - **Frontend:** React.js
