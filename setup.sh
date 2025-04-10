@@ -2,9 +2,9 @@
 # Quick setup script for Classroom Participation App
 
 # Install dependencies
-echo "Installing dependencies..."
-npm install
+echo "Installing dependencies for frontend and backend..."
+npm run install:all
 
-# Start the server
+# Start the backend server
 echo "Starting the backend server..."
-node server.js
+npm run start:backend

@@ -26,6 +26,31 @@ A real-time web application for facilitating classroom participation by allowing
    - After countdown, the app randomly selects one student from those who raised their hands
    - The selected student's name is highlighted for everyone to see
 
+## Project Structure
+
+This project is set up as a monorepo with separate frontend and backend directories:
+
+```
+classroom-participation/
+├── frontend/              # React frontend application
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── JoinRoom.js      # Initial room joining component
+│   │   │   ├── StudentRoom.js   # Student view component 
+│   │   │   └── TeacherRoom.js   # Teacher view component
+│   │   ├── styles/
+│   │   ├── App.js               # Main application component
+│   │   └── index.js             # Application entry point
+│   └── package.json             # Frontend dependencies
+│
+├── backend/               # Node.js backend server
+│   ├── server.js          # Socket.IO and Express server
+│   └── package.json       # Backend dependencies
+│
+└── package.json           # Root package.json for monorepo
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -33,110 +58,80 @@ A real-time web application for facilitating classroom participation by allowing
 - Node.js (v14 or newer)
 - npm or yarn
 
-### Quick Start
+### Development Setup
 
 1. Clone the repository
-2. Run the setup script:
+2. Install dependencies for both the frontend and backend:
    ```
-   ./setup.sh
+   npm run install:all
    ```
-   This will install all dependencies and start the backend server.
+
+3. Start the backend server:
+   ```
+   npm run start:backend
+   ```
+
+4. In a separate terminal, start the frontend development server:
+   ```
+   npm run start:frontend
+   ```
+
+## Deployment with Railway
+
+This project is configured for deployment on Railway with separate services for the frontend and backend.
+
+### Deployment Steps
+
+1. Sign up at [Railway.app](https://railway.app/)
+
+2. Create a new project from your GitHub repository
+
+3. Add two services:
+   - **Backend service:**
+     - Set Root Directory to `/backend`
+     - Railway will automatically use the settings in `backend/railway.json`
    
-3. In a separate terminal, start the React development server:
-   ```
-   npm start
-   ```
+   - **Frontend service:**
+     - Set Root Directory to `/frontend`
+     - Railway will automatically use the settings in `frontend/railway.json`
 
-### Manual Installation
+4. Connect the services:
+   - Get the URL of your deployed backend service
+   - Set it as an environment variable in the frontend service:
+     ```
+     REACT_APP_BACKEND_URL=https://your-backend-service-url.railway.app
+     ```
 
-Alternatively, you can install and run the components manually:
+5. Your application should now be deployed with both frontend and backend services connected!
 
-1. Install all dependencies:
-   ```
-   npm install
-   ```
-2. Start the backend server:
-   ```
-   node server.js
-   ```
-3. Start the React development server (in a separate terminal):
-   ```
-   npm start
-   ```
+## Alternative Deployment Options
 
-## Deployment Options
-
-### 1. Render.com (Recommended for Simplicity)
+### 1. Render.com
 
 Render offers a free tier for both static sites and backend services.
 
-1. Sign up at [Render.com](https://render.com/)
-
-2. Deploy the frontend:
+1. Deploy the frontend:
    - Create a new "Static Site"
-   - Connect your GitHub repository
-   - Set build command: `npm run build`
+   - Set Root Directory to `/frontend`
+   - Set build command: `npm install && npm run build`
    - Set publish directory: `build`
 
-3. Deploy the backend:
+2. Deploy the backend:
    - Create a new "Web Service"
-   - Connect your GitHub repository
+   - Set Root Directory to `/backend`
    - Set build command: `npm install`
    - Set start command: `node server.js`
-   - Select the free plan
-
-4. Update the Socket.IO connection URL in your React components to point to your Render backend URL.
 
 ### 2. Netlify + Heroku
 
 1. Deploy frontend to Netlify (free):
-   - Sign up at [Netlify.com](https://www.netlify.com/)
-   - Connect your GitHub repository
-   - Set build command: `npm run build`
+   - Set Root Directory to `/frontend`
+   - Set build command: `npm install && npm run build`
    - Set publish directory: `build`
 
-2. Deploy backend to Heroku (free with limitations):
-   - Sign up at [Heroku.com](https://www.heroku.com/)
-   - Create a new app
-   - Connect your GitHub repository or use Heroku CLI
+2. Deploy backend to Heroku:
+   - Set Root Directory to `/backend`
    - Set up a `Procfile` with: `web: node server.js`
-   - Deploy and scale your dynos
-
-3. Update the Socket.IO connection URL in your frontend code to point to your Heroku app URL.
-
-### 3. Railway.app
-
-Railway offers a good free tier with simple deployment:
-
-1. Sign up at [Railway.app](https://railway.app/)
-2. Create a new project and connect your GitHub repository
-3. Deploy both frontend and backend as separate services
-4. Configure environment variables and update the Socket.IO connection URL
-
-### Preparing Your Code for Deployment
-
-1. Update the Socket.IO connection in your React components (TeacherRoom.js and StudentRoom.js):
-
-```javascript
-// From this:
-const newSocket = io('http://localhost:3001');
-
-// To this:
-const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
-```
-
-2. Add to your package.json:
-
-```json
-"engines": {
-  "node": ">=14"
-},
-```
-
-3. Create a .env file for local development:
-```
-REACT_APP_BACKEND_URL=http://localhost:3001
-```
 
 ## Technologies Used
 
@@ -144,19 +139,3 @@ REACT_APP_BACKEND_URL=http://localhost:3001
 - **Backend:** Node.js, Express
 - **Real-time Communication:** Socket.IO
 - **Styling:** CSS
-
-## Project Structure
-
-```
-classroom-participation/
-├── public/
-├── src/
-│   ├── components/
-│   │   ├── JoinRoom.js      # Initial room joining component
-│   │   ├── StudentRoom.js   # Student view component
-│   │   └── TeacherRoom.js   # Teacher view component
-│   ├── styles/
-│   ├── App.js               # Main application component
-│   └── index.js             # Application entry point
-└── server.js                # Socket.IO and Express server
-```
