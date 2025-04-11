@@ -130,6 +130,22 @@ function TeacherRoom({ roomId, name }) {
     socket.emit('mark-answer', { roomId, studentId, isCorrect });
   };
 
+  const nextStudent = () => {
+    const studentsWithHandsRaised = students.filter(s => s.hasRaisedHand && s.id !== selectedStudent?.id);
+  
+    if (studentsWithHandsRaised.length > 0) {
+      const randomIndex = Math.floor(Math.random() * studentsWithHandsRaised.length);
+      const next = studentsWithHandsRaised[randomIndex];
+      setSelectedStudent(next);
+  
+      if (socket) {
+        socket.emit('student-selected', { roomId, studentId: next.id });
+      }
+    } else {
+      alert("No more students with raised hands!");
+    }
+  };
+
   return (
     <div>
       <div className="card">
@@ -184,6 +200,11 @@ function TeacherRoom({ roomId, name }) {
           <div>
             <h3>Selected student:</h3>
             <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudent.name}</p>
+            
+            {/* 👇 Next Student button */}
+            <button className="btn btn-outline" onClick={nextStudent}>
+              Next Student
+            </button>
           </div>
         )}
         

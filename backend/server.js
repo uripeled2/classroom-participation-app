@@ -149,7 +149,6 @@ io.on('connection', (socket) => {
   socket.on('student-selected', ({ roomId, studentId }) => {
     if (!rooms[roomId]) return;
     
-    rooms[roomId].isQuestionActive = false;
     rooms[roomId].selectedStudent = studentId;
     
     // Notify all students in the room
