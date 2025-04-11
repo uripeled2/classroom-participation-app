@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
   // Student joins a room
   socket.on('join-room', ({ roomId, name }) => {
     if (!rooms[roomId]) {
-      socket.emit('error', 'Room does not exist');
+      socket.emit('join-error', 'Room does not exist');
       return;
     }
     

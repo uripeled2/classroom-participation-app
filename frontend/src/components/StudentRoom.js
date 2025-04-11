@@ -7,6 +7,7 @@ function StudentRoom({ roomId, name }) {
   const [hasRaisedHand, setHasRaisedHand] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [timer, setTimer] = useState(null);
+  const [joinError, setJoinError] = useState('');
 
   // Connect to socket server on component mount
   useEffect(() => {
@@ -14,8 +15,13 @@ function StudentRoom({ roomId, name }) {
     const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
     setSocket(newSocket);
 
-    // Join room
+    // Attempt to join the room
     newSocket.emit('join-room', { roomId, name });
+
+    // If server says the room doesn't exist
+    newSocket.on('join-error', (errorMsg) => {
+      setJoinError(errorMsg);
+    });
 
     // Listen for question being asked
     newSocket.on('question-asked', () => {
@@ -62,6 +68,9 @@ function StudentRoom({ roomId, name }) {
 
   return (
     <div className="card">
+      {/* Display error if we got one */}
+      {joinError && <p style={{ color: 'red' }}>{joinError}</p>}  
+
       <h1>Student Room</h1>
       <h2>Room: {roomId}</h2>
       <p>Welcome, {name}!</p>
