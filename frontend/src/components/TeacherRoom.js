@@ -35,6 +35,14 @@ function TeacherRoom({ roomId, name }) {
       ));
     });
 
+    newSocket.on('answer-updated', ({ studentId, answer }) => {
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === studentId ? { ...s, answer } : s
+        )
+      );
+    });
+
     return () => {
       newSocket.disconnect();
     };
@@ -120,6 +128,7 @@ function TeacherRoom({ roomId, name }) {
               <li key={student.id}>
                 {student.name} {student.hasRaisedHand && '✋'}
                 {selectedStudent?.id === student.id && ' 🎯'}
+                {student.answer && <div>Answer: {student.answer}</div>}
               </li>
             ))}
           </ul>

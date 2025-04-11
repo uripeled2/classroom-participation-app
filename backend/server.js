@@ -86,6 +86,25 @@ io.on('connection', (socket) => {
       console.log(`Student ${rooms[roomId].students[socket.id].name} raised hand in room ${roomId}`);
     }
   });
+  
+  // Student submits an answer
+  socket.on('answer-submitted', ({ roomId, answer }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    // Check that the student is actually in this room
+    if (!room.students[socket.id]) return;
+
+    // Save answer to that student's record
+    room.students[socket.id].answer = answer;
+
+    // Notify teacher that a student's answer was updated
+    const teacherId = room.teacher.id;
+    io.to(teacherId).emit('answer-updated', {
+      studentId: socket.id,
+      answer,
+    });
+  });
 
   // Teacher starts timer
   socket.on('timer-started', ({ roomId }) => {
