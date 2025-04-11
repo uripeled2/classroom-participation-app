@@ -11,6 +11,8 @@ function StudentRoom({ roomId, name }) {
   const [answer, setAnswer] = useState('');
   const [answerStatus, setAnswerStatus] = useState('none'); // 'none' | 'correct' | 'wrong'
   const [joinError, setJoinError] = useState('');
+  const [teacherName, setTeacherName] = useState('');
+
 
   useEffect(() => {
     const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
@@ -23,6 +25,10 @@ function StudentRoom({ roomId, name }) {
     newSocket.on('join-error', (errorMsg) => {
       setJoinError(errorMsg);
     });
+
+    newSocket.on('room-info', ({ teacherName }) => {
+      setTeacherName(teacherName);
+    });    
 
     // If teacher asks a new question, reset
     newSocket.on('question-asked', () => {
@@ -136,6 +142,7 @@ function StudentRoom({ roomId, name }) {
       <h1>Student Room</h1>
       <h2>Room: {roomId}</h2>
       <p>Welcome, {name}!</p>
+      {teacherName && <p>Teacher: <strong>{teacherName}</strong></p>}
 
       {roomStatus === 'waiting' && <p>Waiting for the teacher to ask a question...</p>}
 

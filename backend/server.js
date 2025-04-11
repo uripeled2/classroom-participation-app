@@ -55,6 +55,11 @@ io.on('connection', (socket) => {
     // Notify teacher about new student
     const teacherId = rooms[roomId].teacher.id;
     io.to(teacherId).emit('student-joined', student);
+
+    // Send teacher info back to the student
+    socket.emit('room-info', {
+      teacherName: rooms[roomId].teacher.name,
+    });
     
     console.log(`Student ${name} joined room ${roomId}`);
   });
