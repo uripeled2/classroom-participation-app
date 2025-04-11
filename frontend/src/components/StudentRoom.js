@@ -9,6 +9,7 @@ function StudentRoom({ roomId, name }) {
   const [timer, setTimer] = useState(null);
   const [answer, setAnswer] = useState('');
   const [answerStatus, setAnswerStatus] = useState('none'); // 'none' | 'correct' | 'wrong'
+  const [joinError, setJoinError] = useState('');
 
   useEffect(() => {
     const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
@@ -16,6 +17,11 @@ function StudentRoom({ roomId, name }) {
 
     // Join the specified room
     newSocket.emit('join-room', { roomId, name });
+
+    // If server says the room doesn't exist
+    newSocket.on('join-error', (errorMsg) => {
+      setJoinError(errorMsg);
+    });
 
     // If teacher asks a new question, reset
     newSocket.on('question-asked', () => {
@@ -86,6 +92,8 @@ function StudentRoom({ roomId, name }) {
 
   return (
     <div className="card">
+      {/* Display error if we got one */}
+      {joinError && <p style={{ color: 'red' }}>{joinError}</p>}  
       <h1>Student Room</h1>
       <h2>Room: {roomId}</h2>
       <p>Welcome, {name}!</p>
