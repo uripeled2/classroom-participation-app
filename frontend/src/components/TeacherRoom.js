@@ -55,6 +55,17 @@ function TeacherRoom({ roomId, name }) {
       );
     });
 
+    newSocket.on('room-reset', () => {
+      setStudents((prev) =>
+        prev.map(s => ({
+          ...s,
+          hasRaisedHand: false,
+          answer: '',
+          answerStatus: 'none',
+        }))
+      );
+    });    
+
     return () => {
       newSocket.disconnect();
     };

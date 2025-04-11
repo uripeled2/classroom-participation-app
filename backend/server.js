@@ -166,20 +166,23 @@ io.on('connection', (socket) => {
   // Teacher resets the room
   socket.on('reset-room', ({ roomId }) => {
     if (!rooms[roomId]) return;
-    
+  
     rooms[roomId].isQuestionActive = false;
     rooms[roomId].selectedStudent = null;
-    
-    // Reset all raised hands
+  
+    // Reset all student data
     Object.keys(rooms[roomId].students).forEach(studentId => {
       rooms[roomId].students[studentId].hasRaisedHand = false;
+      rooms[roomId].students[studentId].answer = '';
+      rooms[roomId].students[studentId].answerStatus = 'none';
     });
-    
-    // Notify all students in the room
-    socket.to(roomId).emit('room-reset');
-    
-    console.log(`Room ${roomId} was reset`);
+  
+    // Notify all clients in the room
+    io.to(roomId).emit('room-reset');
+  
+    console.log(`Room ${roomId} was reset — all student data cleared`);
   });
+  
 
   // Handle disconnection
   socket.on('disconnect', () => {
