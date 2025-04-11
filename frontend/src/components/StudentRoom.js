@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 
 function StudentRoom({ roomId, name }) {
   const [socket, setSocket] = useState(null);
+  // 'waiting' | 'question' | 'timer' | 'selected'
   const [roomStatus, setRoomStatus] = useState('waiting'); 
   const [hasRaisedHand, setHasRaisedHand] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
@@ -74,20 +75,58 @@ function StudentRoom({ roomId, name }) {
     };
   }, [roomId, name]);
 
+  // Tick the timer down locally
+  useEffect(() => {
+    let interval;
+    if (roomStatus === 'timer' && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [roomStatus, timer]);
+
   // This single button function does two things:
   // 1) Submit/Update the answer every time
   // 2) Raise hand only the first time (if not already raised)
   const submitOrUpdateAnswer = () => {
     if (!socket) return;
+    // Only allow if question or timer is active
+    if (roomStatus !== 'question' && roomStatus !== 'timer') return;
 
     // 1) Always update the server with the new answer
     socket.emit('answer-submitted', { roomId, answer });
 
     // 2) If student hasn’t raised hand yet, raise it now
-    if (!hasRaisedHand && roomStatus === 'question') {
+    if (!hasRaisedHand) {
       setHasRaisedHand(true);
       socket.emit('raise-hand', { roomId });
     }
+  };
+
+  const renderQuestionUI = () => {
+    // Student can always type or re-submit while it's question or timer
+    return (
+      <div>
+        <h3>The teacher asked a question!</h3>
+        <textarea
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="Type your answer here..."
+          rows={4}
+          cols={40}
+        />
+
+        <div style={{ marginTop: '1rem' }}>
+          <button className="btn btn-large" onClick={submitOrUpdateAnswer}>
+            {hasRaisedHand
+              ? 'Update Answer'
+              : 'Submit Answer & Raise Hand ✋'}
+          </button>
+          {hasRaisedHand && <p>Your hand is raised.</p>}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -98,33 +137,15 @@ function StudentRoom({ roomId, name }) {
       <h2>Room: {roomId}</h2>
       <p>Welcome, {name}!</p>
 
-      {roomStatus === 'waiting' && (
-        <p>Waiting for the teacher to ask a question...</p>
-      )}
+      {roomStatus === 'waiting' && <p>Waiting for the teacher to ask a question...</p>}
 
-      {(roomStatus === 'question' || roomStatus === 'timer') && (
+      {/* Show question UI for both 'question' and 'timer' states */}
+      {(roomStatus === 'question' || roomStatus === 'timer') && renderQuestionUI()}
+
+      {/* Show timer if in 'timer' state */}
+      {roomStatus === 'timer' && (
         <div>
-          <h3>The teacher asked a question!</h3>
-
-          {/* Textarea for student's answer */}
-          <textarea
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Type your answer here..."
-            rows={4}
-            cols={40}
-          />
-
-          <div style={{ marginTop: '1rem' }}>
-            <button className="btn btn-large" onClick={submitOrUpdateAnswer}>
-              {hasRaisedHand
-                ? 'Update Answer'
-                : 'Submit Answer & Raise Hand ✋'
-              }
-            </button>
-
-            {hasRaisedHand && <p>You have raised your hand. Waiting for teacher’s action...</p>}
-          </div>
+          <h3>Time remaining: {timer}s</h3>
         </div>
       )}
 
@@ -138,21 +159,12 @@ function StudentRoom({ roomId, name }) {
         </div>
       )}
 
-      {roomStatus === 'timer' && (
-        <div>
-          <h3>Time remaining: {timer}s</h3>
-        </div>
-      )}
-
-      {/* If teacher marked the answer wrong, show feedback; can keep updating */}
+      {/* If teacher marked wrong */}
       {answerStatus === 'wrong' && (
         <div style={{ color: 'red', marginTop: '1rem' }}>
-          Teacher says your answer is WRONG. Feel free to change and resubmit.
+          Teacher says your answer is WRONG. Feel free to update and re-submit.
         </div>
       )}
-
-      {/* If teacher marked correct, you can show a message or do nothing */}
-      {/* {answerStatus === 'correct' && <p>Your answer is correct!</p>} */}
     </div>
   );
 }
