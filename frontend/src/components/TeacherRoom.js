@@ -6,6 +6,7 @@ function TeacherRoom({ roomId, name }) {
   const [isQuestionActive, setIsQuestionActive] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [timerDuration, setTimerDuration] = useState(10); // default
   const [timer, setTimer] = useState(10);
   const [isCounting, setIsCounting] = useState(false);
 
@@ -89,11 +90,16 @@ function TeacherRoom({ roomId, name }) {
   };
 
   const startTimer = () => {
+    if (timerDuration <= 0) return;
+  
     setIsCounting(true);
+    setTimer(timerDuration);
+  
     if (socket) {
-      socket.emit('timer-started', { roomId });
+      socket.emit('timer-started', { roomId, duration: timerDuration });
     }
   };
+  
 
   const selectRandomStudent = () => {
     const studentsWithHandsRaised = students.filter(s => s.hasRaisedHand);
@@ -185,16 +191,30 @@ function TeacherRoom({ roomId, name }) {
           <div>
             <h3>Question is active!</h3>
             <p>Students who want to answer: {students.filter(s => s.hasRaisedHand).length}</p>
-            
+
+            {/* Custom Timer Input */}
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Set Timer Duration (seconds): </label>
+              <input
+                type="number"
+                value={timerDuration}
+                onChange={(e) => setTimerDuration(parseInt(e.target.value) || 0)}
+                min="1"
+                style={{ width: '60px', marginLeft: '0.5rem' }}
+              />
+            </div>
+
+            {/* Start/Countdown UI */}
             {!isCounting ? (
               <button className="btn" onClick={startTimer}>
-                Start 10s Timer
+                Start {timerDuration}s Timer
               </button>
             ) : (
               <h3>Time remaining: {timer}s</h3>
             )}
           </div>
         )}
+
         
         {selectedStudent && (
           <div>

@@ -141,13 +141,14 @@ io.on('connection', (socket) => {
   });
 
   // Teacher starts timer
-  socket.on('timer-started', ({ roomId }) => {
-    if (!rooms[roomId]) return;
-    
-    // Notify all students in the room
-    socket.to(roomId).emit('timer-start', 10); // 10 seconds
-    
-    console.log(`Timer started in room ${roomId}`);
+  socket.on('timer-started', ({ roomId, duration }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+  
+    // Notify students
+    socket.to(roomId).emit('timer-start', duration);
+  
+    console.log(`Timer started in room ${roomId} for ${duration} seconds`);
   });
 
   // Teacher selects a student
