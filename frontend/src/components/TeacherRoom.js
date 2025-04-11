@@ -35,10 +35,21 @@ function TeacherRoom({ roomId, name }) {
       ));
     });
 
-    newSocket.on('answer-updated', ({ studentId, answer }) => {
+    // On answer-updated, reset that student's answer + answerStatus
+    newSocket.on('answer-updated', ({ studentId, answer, answerStatus }) => {
       setStudents((prev) =>
         prev.map((s) =>
-          s.id === studentId ? { ...s, answer } : s
+          s.id === studentId
+            ? { ...s, answer, answerStatus } // store the new answer and new 'none' status
+            : s
+        )
+      );
+    });
+
+    newSocket.on('answer-marked', ({ studentId, answerStatus }) => {
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === studentId ? { ...s, answerStatus } : s
         )
       );
     });
@@ -114,6 +125,11 @@ function TeacherRoom({ roomId, name }) {
     }
   };
 
+  const markAnswer = (studentId, isCorrect) => {
+    if (!socket) return;
+    socket.emit('mark-answer', { roomId, studentId, isCorrect });
+  };
+
   return (
     <div>
       <div className="card">
@@ -121,18 +137,27 @@ function TeacherRoom({ roomId, name }) {
         <h2>Room Code: <span style={{ color: '#4CAF50' }}>{roomId}</span></h2>
         <p>Share this code with your students so they can join this room.</p>
         
-        <div className="mb-2">
-          <h3>Connected Students: {students.length}</h3>
-          <ul>
-            {students.map(student => (
-              <li key={student.id}>
-                {student.name} {student.hasRaisedHand && '✋'}
-                {selectedStudent?.id === student.id && ' 🎯'}
-                {student.answer && <div>Answer: {student.answer}</div>}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <div>
+        <h3>Connected Students: {students.length}</h3>
+        <ul>
+          {students.map((student) => (
+            <li key={student.id}>
+              <strong>{student.name}</strong> {student.hasRaisedHand && '✋'}
+              {selectedStudent?.id === student.id && ' 🎯'}
+
+              {student.answer && (
+                <div>
+                  <p>Answer: {student.answer}</p>
+                  <p>Status: {student.answerStatus}</p>
+                  <button onClick={() => markAnswer(student.id, true)}>Mark Correct</button>
+                  <button onClick={() => markAnswer(student.id, false)}>Mark Wrong</button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+
         
         {!isQuestionActive && !selectedStudent && (
           <button className="btn btn-large" onClick={askQuestion}>

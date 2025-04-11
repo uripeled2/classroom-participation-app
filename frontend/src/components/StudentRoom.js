@@ -7,9 +7,8 @@ function StudentRoom({ roomId, name }) {
   const [hasRaisedHand, setHasRaisedHand] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [timer, setTimer] = useState(null);
-
-  // The student's typed answer
   const [answer, setAnswer] = useState('');
+  const [answerStatus, setAnswerStatus] = useState('none'); // 'none' | 'correct' | 'wrong'
 
   useEffect(() => {
     const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
@@ -39,6 +38,21 @@ function StudentRoom({ roomId, name }) {
       setRoomStatus('selected');
     });
 
+    newSocket.on('answer-marked', ({ studentId, answerStatus }) => {
+      // If it's THIS student, update their local status
+      if (studentId === newSocket.id) {
+        setAnswerStatus(answerStatus);
+      }
+    });
+
+    newSocket.on('answer-updated', ({ studentId, answer, answerStatus }) => {
+      // if it's the local user
+      if (studentId === newSocket.id) {
+        setAnswer(answer);         // Store the new answer
+        setAnswerStatus(answerStatus); // Should be 'none' in this scenario
+      }
+    });
+
     // Room reset
     newSocket.on('room-reset', () => {
       setRoomStatus('waiting');
@@ -46,6 +60,7 @@ function StudentRoom({ roomId, name }) {
       setIsSelected(false);
       setTimer(null);
       setAnswer('');
+      setAnswerStatus('none');
     });
 
     return () => {
@@ -53,16 +68,17 @@ function StudentRoom({ roomId, name }) {
     };
   }, [roomId, name]);
 
-  // NEW: Single function for both steps
-  const raiseHandWithAnswer = () => {
-    // Only allow if question is active and you haven't raised your hand yet
-    if (roomStatus !== 'question' || hasRaisedHand) return;
+  // This single button function does two things:
+  // 1) Submit/Update the answer every time
+  // 2) Raise hand only the first time (if not already raised)
+  const submitOrUpdateAnswer = () => {
+    if (!socket) return;
 
-    if (socket) {
-      // 1) Send the typed answer to the server
-      socket.emit('answer-submitted', { roomId, answer });
+    // 1) Always update the server with the new answer
+    socket.emit('answer-submitted', { roomId, answer });
 
-      // 2) Mark hand as raised
+    // 2) If student hasn’t raised hand yet, raise it now
+    if (!hasRaisedHand && roomStatus === 'question') {
       setHasRaisedHand(true);
       socket.emit('raise-hand', { roomId });
     }
@@ -78,10 +94,11 @@ function StudentRoom({ roomId, name }) {
         <p>Waiting for the teacher to ask a question...</p>
       )}
 
-      {roomStatus === 'question' && (
+      {(roomStatus === 'question' || roomStatus === 'timer') && (
         <div>
           <h3>The teacher asked a question!</h3>
-          {/* Textarea for typing the answer */}
+
+          {/* Textarea for student's answer */}
           <textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
@@ -91,26 +108,15 @@ function StudentRoom({ roomId, name }) {
           />
 
           <div style={{ marginTop: '1rem' }}>
-            {/* One button to do both: submit answer + raise hand */}
-            {!hasRaisedHand ? (
-              <button className="btn btn-large" onClick={raiseHandWithAnswer}>
-                Submit Answer & Raise Hand ✋
-              </button>
-            ) : (
-              <p>Your hand is raised. Waiting for selection...</p>
-            )}
-          </div>
-        </div>
-      )}
+            <button className="btn btn-large" onClick={submitOrUpdateAnswer}>
+              {hasRaisedHand
+                ? 'Update Answer'
+                : 'Submit Answer & Raise Hand ✋'
+              }
+            </button>
 
-      {roomStatus === 'timer' && (
-        <div>
-          <h3>Time remaining: {timer}s</h3>
-          <p>
-            {hasRaisedHand
-              ? 'Your hand is raised. Waiting for selection...'
-              : 'You did not raise your hand for this question.'}
-          </p>
+            {hasRaisedHand && <p>You have raised your hand. Waiting for teacher’s action...</p>}
+          </div>
         </div>
       )}
 
@@ -123,6 +129,22 @@ function StudentRoom({ roomId, name }) {
           )}
         </div>
       )}
+
+      {roomStatus === 'timer' && (
+        <div>
+          <h3>Time remaining: {timer}s</h3>
+        </div>
+      )}
+
+      {/* If teacher marked the answer wrong, show feedback; can keep updating */}
+      {answerStatus === 'wrong' && (
+        <div style={{ color: 'red', marginTop: '1rem' }}>
+          Teacher says your answer is WRONG. Feel free to change and resubmit.
+        </div>
+      )}
+
+      {/* If teacher marked correct, you can show a message or do nothing */}
+      {/* {answerStatus === 'correct' && <p>Your answer is correct!</p>} */}
     </div>
   );
 }

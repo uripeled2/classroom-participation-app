@@ -43,7 +43,13 @@ io.on('connection', (socket) => {
     
     socket.join(roomId);
     
-    const student = { id: socket.id, name };
+    const student = {
+      id: socket.id,
+      name,
+      hasRaisedHand: false,
+      answer: '',
+      answerStatus: 'none',
+    };
     rooms[roomId].students[socket.id] = student;
     
     // Notify teacher about new student
@@ -98,12 +104,35 @@ io.on('connection', (socket) => {
     // Save answer to that student's record
     room.students[socket.id].answer = answer;
 
-    // Notify teacher that a student's answer was updated
-    const teacherId = room.teacher.id;
-    io.to(teacherId).emit('answer-updated', {
+    // Notify everyone in the room (teacher + all students) that this student's
+    // answer changed and is now 'none' again
+    io.to(roomId).emit('answer-updated', {
       studentId: socket.id,
       answer,
+      answerStatus: 'none',
     });
+
+    console.log(
+      `Student ${room.students[socket.id].name} updated their answer => reset status to 'none'`
+    );
+  });
+
+  // Teacher marks answer right or wrong
+  socket.on('mark-answer', ({ roomId, studentId, isCorrect }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+    const student = room.students[studentId];
+    if (!student) return;
+
+    student.answerStatus = isCorrect ? 'correct' : 'wrong';
+
+    // Broadcast to the entire room so teacher + that student see the update
+    io.to(roomId).emit('answer-marked', {
+      studentId,
+      answerStatus: student.answerStatus, // 'correct' or 'wrong'
+    });
+
+    console.log(`Teacher marked ${student.name}'s answer as ${student.answerStatus}`);
   });
 
   // Teacher starts timer
